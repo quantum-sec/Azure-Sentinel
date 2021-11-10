@@ -7,6 +7,7 @@ name: "Azure Sentinel Validations"
 
 steps:
   - bash: |
+      git config --global --add url."git@github.com:".insteadOf "https://github.com/"
       git remote add upstream https://github.com/Azure/Azure-Sentinel.git
       git checkout master
       git pull upstream master
