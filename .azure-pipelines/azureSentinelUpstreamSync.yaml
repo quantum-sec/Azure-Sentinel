@@ -1,0 +1,16 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+name: "Azure Sentinel Sync with Upstream"
+
+steps:
+  - checkout: self
+    persistCredentials: true
+  - bash: |
+      git remote add upstream https://github.com/Azure/Azure-Sentinel.git
+      git checkout master
+      git pull upstream master
+      git push origin master
+    displayName: Sync Master with Upstream Provider Azure/Azure-Sentinel
