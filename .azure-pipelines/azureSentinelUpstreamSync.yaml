@@ -3,7 +3,19 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-name: "Azure Sentinel Validations"
+name: "Azure Sentinel Sync with Upstream"
+
+trigger:
+  branches:
+    include:
+      - master
+
+resources:
+  repositories:
+    - repository: pipeline-library
+      type: github
+      endpoint: quantum-sec-github
+      name: quantum-sec/pipeline-library
 
 steps:
   - bash: |
@@ -13,3 +25,4 @@ steps:
       git pull upstream master
       git push origin master
     displayName: Sync Master with Upstream Provider Azure/Azure-Sentinel
+  - template: templates/jobs/default.yml@pipeline-library
