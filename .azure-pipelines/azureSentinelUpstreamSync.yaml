@@ -5,19 +5,7 @@
 
 name: "Azure Sentinel Sync with Upstream"
 
-trigger:
-  branches:
-    include:
-      - master
-
-resources:
-  repositories:
-    - repository: pipeline-library
-      type: github
-      endpoint: quantum-sec-github
-      name: quantum-sec/pipeline-library
-
-jobs:
+steps:
   - bash: |
       git config --global --add url."git@github.com:".insteadOf "https://github.com/"
       git remote add upstream https://github.com/Azure/Azure-Sentinel.git
@@ -25,4 +13,3 @@ jobs:
       git pull upstream master
       git push origin master
     displayName: Sync Master with Upstream Provider Azure/Azure-Sentinel
-  - template: templates/jobs/default.yml@pipeline-library
