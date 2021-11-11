@@ -6,6 +6,8 @@
 name: "Azure Sentinel Sync with Upstream"
 
 steps:
+  - checkout: self
+    persistCredentials: true
   - bash: |
       git remote add upstream https://github.com/Azure/Azure-Sentinel.git
       git checkout master
