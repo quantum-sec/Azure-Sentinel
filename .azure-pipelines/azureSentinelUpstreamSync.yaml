@@ -5,6 +5,13 @@
 
 name: "Azure Sentinel Sync with Upstream"
 
+schedules:
+- cron: "0 03 * * 0"
+  displayName: Weekly Sunday Azure-Sentinel Sync
+  branches:
+    include:
+    - master
+
 steps:
   - checkout: self
     persistCredentials: true
