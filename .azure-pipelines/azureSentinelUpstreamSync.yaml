@@ -11,6 +11,7 @@ schedules:
   branches:
     include:
     - master
+    - quantum
 
 steps:
   - checkout: self
