@@ -26,7 +26,13 @@
             "metadata": {
                 "description": "The group Id for gitlab groups to be audited."
             }
-        }
+        },
+        "workspaceId": {
+        "type": "string"
+        },
+        "workSpaceKey": {
+        "type": "securestring"
+    }
   },
   "functions": [],
   "variables": {
@@ -64,12 +70,14 @@
     "tags": {},
     "properties": {
       "displayName": "[variables('azureloganalyticsdatacollector')]",
-      "parameterValues": {},
       "customParameterValues": {},
       "nonSecretParameterValues": {},
       "api": {
         "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azureloganalyticsdatacollector')]"
-      }
+      },        "parameterValues": {
+          "username": "[parameters('workspaceId')]",
+          "password": "[parameters('workSpaceKey')]"
+        }
     }
   },    {
     "name": "[variables('AzureKeyVaultConnectionName')]",
@@ -79,7 +87,11 @@
     "tags": {},
     "properties": {
       "displayName": "[variables('AzureKeyVaultConnectionName')]",
-      "parameterValues": {},
+        "parameterValues": {
+          "token:TenantId": "[subscription().tenantId]",
+          "token:grantType": "code",
+          "vaultName": "[variables('AzureKeyVaultName')]"
+        },
       "customParameterValues": {},
       "nonSecretParameterValues": {},
       "api": {
