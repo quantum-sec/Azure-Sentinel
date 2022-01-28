@@ -15,7 +15,5 @@ This log source uses logic app workflow with log analytics send data plugin. Thi
 
 ## Authorize API Connection
 After deployment, go to `API Connections` to authorize for: 
-1. AzureDataCollector by adding workspace ID and Shared key for your log analytics workspace.
-![AzDataCollectorAPI](./AzureDataCollectorAPI.png)<br>
-2. Azure Keyvault by clicking on `Authorize button`.
+1. Azure Keyvault by clicking on `Authorize button`.
 ![KVAPIConnection](./KVAPIConnection.png)<br>
