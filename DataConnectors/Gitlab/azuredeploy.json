@@ -199,7 +199,7 @@
                 "inputs": {
                     "body": "@{body('Project_Audit_Events')}",
                     "headers": {
-                        "Log-Type": "GitlabProject"
+                        "Log-Type": "GitLabProject"
                     },
                     "host": {
                         "connection": {
