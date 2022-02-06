@@ -220,7 +220,7 @@
                 "inputs": {
                     "body": "@{body('Group_Audit_events')}",
                     "headers": {
-                        "Log-Type": "GitlabGroup"
+                        "Log-Type": "GitLabGroup"
                     },
                     "host": {
                         "connection": {
