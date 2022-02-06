@@ -241,7 +241,7 @@
                 "inputs": {
                     "body": "@{body('User_Audit_Events')}",
                     "headers": {
-                        "Log-Type": "GitlabUser"
+                        "Log-Type": "GitLabUser"
                     },
                     "host": {
                         "connection": {
