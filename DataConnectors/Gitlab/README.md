@@ -1,5 +1,5 @@
 ## Description
-This log source uses logic app workflow with log analytics send data plugin. This Gitlab connector uses 3 types of audit logs (Project Audit, Group Audit and user events). For additional audit logs, you can modify the workflow with additional apis. For more information on Gitlab audit events, refer to https://docs.gitlab.com/ee/api/audit_events.html
+This log source uses logic app workflow with log analytics send data plugin. This GitLab connector uses 3 types of audit logs (Project Audit, Group Audit and user events). For additional audit logs, you can modify the workflow with additional APIs. For more information on GitLab audit events, refer to https://docs.gitlab.com/ee/api/audit_events.html
 
 ## Prerequisites
 1. Gitlab personal access token with read permissions for groups and projects.
