@@ -10,7 +10,7 @@
             "type": "securestring",
             "defaultValue": "<Personal Access Token>",
             "metadata": {
-                "description": "The personal access token for gitlab instance with read access."
+                "description": "The personal access token for GitLab instance with read access."
             }
         },
         "ProjectID": {
