@@ -3,26 +3,26 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
       "PlaybookName": {
-            "defaultValue": "GitLab-Sentinel",
+            "defaultValue": "Gitlab-Sentinel",
             "type": "string"
         },
         "PersonalAccessToken": {
             "type": "securestring",
             "defaultValue": "<Personal Access Token>",
             "metadata": {
-                "description": "The personal access token for GitLab instance with read access."
+                "description": "The personal access token for gitlab instance with read access."
             }
         },
-        "ProjectID": {
+        "ProjectIds": {
             "type": "string",
-            "defaultValue": "<ProjectID>",
+            "defaultValue": "<ProjectIDs>",
             "metadata": {
                 "description": "The project id for gitlab projects to be audited."
             }
         },
-        "GroupID": {
+        "GroupIds": {
             "type": "string",
-            "defaultValue": "<GroupID>",
+            "defaultValue": "<GroupIDs>",
             "metadata": {
                 "description": "The group Id for gitlab groups to be audited."
             }
@@ -118,6 +118,10 @@
     "type": "Microsoft.Logic/workflows",
     "apiVersion": "2017-07-01",
     "location": "[resourceGroup().location]",
+    "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', variables('AzureKeyVaultConnectionName'))]",
+        "[resourceId('Microsoft.Web/connections', variables('azureloganalyticsdatacollector'))]"
+    ],
     "properties": {
 
     "definition": {
@@ -128,6 +132,94 @@
                 "kind": "CurrentTime",
                 "runAfter": {},
                 "type": "Expression"
+            },
+            "For_each_Group_ID": {
+                "actions": {
+                    "Get_Group_Audit_Events": {
+                        "inputs": {
+                            "headers": {
+                                "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
+                                "created_after": "@variables('created_after')"
+                            },
+                            "method": "GET",
+                            "uri": "https://gitlab.com/api/v4/groups/@{int(items('For_each_Group_ID'))}/audit_events"
+                        },
+                        "runAfter": {},
+                        "type": "Http"
+                    },
+                    "Post_Group_Audit_Events": {
+                        "inputs": {
+                            "body": "@{body('Get_Group_Audit_Events')}",
+                            "headers": {
+                                "Log-Type": "GitlabGroup"
+                            },
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "path": "/api/logs"
+                        },
+                        "runAfter": {
+                            "Get_Group_Audit_Events": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection"
+                    }
+                },
+                "foreach": "[concat('@split(''',parameters('GroupIds'),''','','')')]",
+                "runAfter": {
+                    "Initialize_Group_IDs": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
+            },
+            "For_each_project_ID": {
+                "actions": {
+                    "Get_Project_Audit_Events": {
+                        "inputs": {
+                            "headers": {
+                                "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
+                                "created_after": "@variables('created_after')"
+                            },
+                            "method": "GET",
+                            "uri": "https://gitlab.com/api/v4/projects/@{int(items('For_each_project_ID'))}/audit_events\""
+                        },
+                        "runAfter": {},
+                        "type": "Http"
+                    },
+                    "Post_Project_Audit_Events": {
+                        "inputs": {
+                            "body": "@{body('Get_Project_Audit_Events')}",
+                            "headers": {
+                                "Log-Type": "GitlabProject"
+                            },
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "path": "/api/logs"
+                        },
+                        "runAfter": {
+                            "Get_Project_Audit_Events": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection"
+                    }
+                },
+                "foreach": "[concat('@split(''',parameters('ProjectIds'),''','','')')]",
+                "runAfter": {
+                    "Initialize_Project_IDs": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
             },
             "Get_secret": {
                 "inputs": {
@@ -146,21 +238,37 @@
                 },
                 "type": "ApiConnection"
             },
-            "Group_Audit_events": {
+            "Initialize_Group_IDs": {
                 "inputs": {
-                    "headers": {
-                        "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
-                        "created_after": "@variables('created_after')"
-                    },
-                    "method": "GET",
-                    "uri": "[concat('https://gitlab.com/api/v4/groups/', parameters('GroupID'),'/audit_events')]"
+                    "variables": [
+                        {
+                            "name": "GroupIDs",
+                            "type": "string"
+                        }
+                    ]
                 },
                 "runAfter": {
                     "Get_secret": [
                         "Succeeded"
                     ]
                 },
-                "type": "Http"
+                "type": "InitializeVariable"
+            },
+            "Initialize_Project_IDs": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "ProjectIDs",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Get_secret": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
             },
             "Initialize_variable": {
                 "inputs": {
@@ -179,69 +287,11 @@
                 },
                 "type": "InitializeVariable"
             },
-            "Project_Audit_Events": {
-                "inputs": {
-                    "headers": {
-                        "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
-                        "created_after": "@variables('created_after')"
-                    },
-                    "method": "GET",
-                    "uri": "[concat('https://gitlab.com/api/v4/projects/', parameters('ProjectID'),'/audit_events')]"
-                },
-                "runAfter": {
-                    "Get_secret": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "Http"
-            },
-            "Send_Data": {
-                "inputs": {
-                    "body": "@{body('Project_Audit_Events')}",
-                    "headers": {
-                        "Log-Type": "GitLabProject"
-                    },
-                    "host": {
-                        "connection": {
-                            "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
-                        }
-                    },
-                    "method": "post",
-                    "path": "/api/logs"
-                },
-                "runAfter": {
-                    "Project_Audit_Events": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "ApiConnection"
-            },
-            "Send_Data_2": {
-                "inputs": {
-                    "body": "@{body('Group_Audit_events')}",
-                    "headers": {
-                        "Log-Type": "GitLabGroup"
-                    },
-                    "host": {
-                        "connection": {
-                            "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
-                        }
-                    },
-                    "method": "post",
-                    "path": "/api/logs"
-                },
-                "runAfter": {
-                    "Group_Audit_events": [
-                        "Succeeded"
-                    ]
-                },
-                "type": "ApiConnection"
-            },
-            "Send_Data_3": {
+            "Post_User_Audit_Events": {
                 "inputs": {
                     "body": "@{body('User_Audit_Events')}",
                     "headers": {
-                        "Log-Type": "GitLabUser"
+                        "Log-Type": "GitlabUser"
                     },
                     "host": {
                         "connection": {
