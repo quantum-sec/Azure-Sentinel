@@ -135,7 +135,7 @@
             },
             "For_each_Group_ID": {
                 "actions": {
-                    "Get_Group_Audit_Events": {
+                    "Get_total_pages_for_Group_logs": {
                         "inputs": {
                             "headers": {
                                 "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
@@ -147,26 +147,171 @@
                         "runAfter": {},
                         "type": "Http"
                     },
-                    "Post_Group_Audit_Events": {
+                    "Parse_Group_Headers": {
                         "inputs": {
-                            "body": "@{body('Get_Group_Audit_Events')}",
-                            "headers": {
-                                "Log-Type": "GitlabGroup"
-                            },
-                            "host": {
-                                "connection": {
-                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
-                                }
-                            },
-                            "method": "post",
-                            "path": "/api/logs"
+                            "content": "@outputs('Get_total_pages_for_Group_logs')['headers']",
+                            "schema": {
+                                "properties": {
+                                    "CF-Cache-Status": {
+                                        "type": "string"
+                                    },
+                                    "CF-RAY": {
+                                        "type": "string"
+                                    },
+                                    "Cache-Control": {
+                                        "type": "string"
+                                    },
+                                    "Connection": {
+                                        "type": "string"
+                                    },
+                                    "Content-Length": {
+                                        "type": "string"
+                                    },
+                                    "Content-Type": {
+                                        "type": "string"
+                                    },
+                                    "Date": {
+                                        "type": "string"
+                                    },
+                                    "ETag": {
+                                        "type": "string"
+                                    },
+                                    "Expect-CT": {
+                                        "type": "string"
+                                    },
+                                    "GitLab-LB": {
+                                        "type": "string"
+                                    },
+                                    "GitLab-SV": {
+                                        "type": "string"
+                                    },
+                                    "Link": {
+                                        "type": "string"
+                                    },
+                                    "NEL": {
+                                        "type": "string"
+                                    },
+                                    "RateLimit-Limit": {
+                                        "type": "string"
+                                    },
+                                    "RateLimit-Observed": {
+                                        "type": "string"
+                                    },
+                                    "RateLimit-Remaining": {
+                                        "type": "string"
+                                    },
+                                    "RateLimit-Reset": {
+                                        "type": "string"
+                                    },
+                                    "RateLimit-ResetTime": {
+                                        "type": "string"
+                                    },
+                                    "Referrer-Policy": {
+                                        "type": "string"
+                                    },
+                                    "Report-To": {
+                                        "type": "string"
+                                    },
+                                    "Server": {
+                                        "type": "string"
+                                    },
+                                    "Strict-Transport-Security": {
+                                        "type": "string"
+                                    },
+                                    "Transfer-Encoding": {
+                                        "type": "string"
+                                    },
+                                    "Vary": {
+                                        "type": "string"
+                                    },
+                                    "X-Content-Type-Options": {
+                                        "type": "string"
+                                    },
+                                    "X-Frame-Options": {
+                                        "type": "string"
+                                    },
+                                    "X-Next-Page": {
+                                        "type": "string"
+                                    },
+                                    "X-Page": {
+                                        "type": "string"
+                                    },
+                                    "X-Per-Page": {
+                                        "type": "string"
+                                    },
+                                    "X-Prev-Page": {
+                                        "type": "string"
+                                    },
+                                    "X-Request-Id": {
+                                        "type": "string"
+                                    },
+                                    "X-Runtime": {
+                                        "type": "string"
+                                    },
+                                    "X-Total": {
+                                        "type": "string"
+                                    },
+                                    "X-Total-Pages": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
                         },
                         "runAfter": {
-                            "Get_Group_Audit_Events": [
+                            "Get_total_pages_for_Group_logs": [
                                 "Succeeded"
                             ]
                         },
-                        "type": "ApiConnection"
+                        "type": "ParseJson"
+                    },
+                    "Until_Group_Audit": {
+                        "actions": {
+                            "HTTP": {
+                                "inputs": {
+                                    "headers": {
+                                        "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
+                                        "created_after": "@variables('created_after')"
+                                    },
+                                    "method": "GET",
+                                    "uri": "https://gitlab.com/api/v4/groups/@{int(items('For_each_Group_ID'))}/audit_events?per_page=100&page=@{variables('PageNum')}"
+                                },
+                                "runAfter": {},
+                                "type": "Http"
+                            },
+                            "Post_Group_Audit_Events": {
+                                "inputs": {
+                                    "body": "@{body('Get_total_pages_for_Group_logs')}",
+                                    "headers": {
+                                        "Log-Type": "GitlabGroup"
+                                    },
+                                    "host": {
+                                        "connection": {
+                                            "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
+                                        }
+                                    },
+                                    "method": "post",
+                                    "path": "/api/logs"
+                                },
+                                "runAfter": {
+                                    "HTTP": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "ApiConnection"
+                            }
+                        },
+                        "expression": "@equals(variables('PageNum'), int(body('Parse_Group_Headers')?['X-Total-Pages']))",
+                        "limit": {
+                            "count": 60,
+                            "timeout": "PT1H"
+                        },
+                        "runAfter": {
+                            "Parse_Group_Headers": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Until"
                     }
                 },
                 "foreach": "[concat('@split(''',parameters('GroupIds'),''','','')')]",
@@ -179,38 +324,194 @@
             },
             "For_each_project_ID": {
                 "actions": {
-                    "Get_Project_Audit_Events": {
+                    "Get_total_pages_for_Project_logs": {
                         "inputs": {
                             "headers": {
                                 "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
                                 "created_after": "@variables('created_after')"
                             },
                             "method": "GET",
-                            "uri": "https://gitlab.com/api/v4/projects/@{int(items('For_each_project_ID'))}/audit_events\""
+                            "uri": "https://gitlab.com/api/v4/projects/@{int(items('For_each_project_ID'))}/audit_events"
                         },
                         "runAfter": {},
                         "type": "Http"
                     },
-                    "Post_Project_Audit_Events": {
+                    "Parse_project_Headers": {
                         "inputs": {
-                            "body": "@{body('Get_Project_Audit_Events')}",
-                            "headers": {
-                                "Log-Type": "GitlabProject"
-                            },
-                            "host": {
-                                "connection": {
-                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
-                                }
-                            },
-                            "method": "post",
-                            "path": "/api/logs"
+                            "content": "@outputs('Get_total_pages_for_Project_logs')['headers']",
+                            "schema": {
+                                "properties": {
+                                    "CF-Cache-Status": {
+                                        "type": "string"
+                                    },
+                                    "CF-RAY": {
+                                        "type": "string"
+                                    },
+                                    "Cache-Control": {
+                                        "type": "string"
+                                    },
+                                    "Connection": {
+                                        "type": "string"
+                                    },
+                                    "Content-Length": {
+                                        "type": "string"
+                                    },
+                                    "Content-Type": {
+                                        "type": "string"
+                                    },
+                                    "Date": {
+                                        "type": "string"
+                                    },
+                                    "ETag": {
+                                        "type": "string"
+                                    },
+                                    "Expect-CT": {
+                                        "type": "string"
+                                    },
+                                    "GitLab-LB": {
+                                        "type": "string"
+                                    },
+                                    "GitLab-SV": {
+                                        "type": "string"
+                                    },
+                                    "Link": {
+                                        "type": "string"
+                                    },
+                                    "NEL": {
+                                        "type": "string"
+                                    },
+                                    "RateLimit-Limit": {
+                                        "type": "string"
+                                    },
+                                    "RateLimit-Observed": {
+                                        "type": "string"
+                                    },
+                                    "RateLimit-Remaining": {
+                                        "type": "string"
+                                    },
+                                    "RateLimit-Reset": {
+                                        "type": "string"
+                                    },
+                                    "RateLimit-ResetTime": {
+                                        "type": "string"
+                                    },
+                                    "Referrer-Policy": {
+                                        "type": "string"
+                                    },
+                                    "Report-To": {
+                                        "type": "string"
+                                    },
+                                    "Server": {
+                                        "type": "string"
+                                    },
+                                    "Strict-Transport-Security": {
+                                        "type": "string"
+                                    },
+                                    "Transfer-Encoding": {
+                                        "type": "string"
+                                    },
+                                    "Vary": {
+                                        "type": "string"
+                                    },
+                                    "X-Content-Type-Options": {
+                                        "type": "string"
+                                    },
+                                    "X-Frame-Options": {
+                                        "type": "string"
+                                    },
+                                    "X-Next-Page": {
+                                        "type": "string"
+                                    },
+                                    "X-Page": {
+                                        "type": "string"
+                                    },
+                                    "X-Per-Page": {
+                                        "type": "string"
+                                    },
+                                    "X-Prev-Page": {
+                                        "type": "string"
+                                    },
+                                    "X-Request-Id": {
+                                        "type": "string"
+                                    },
+                                    "X-Runtime": {
+                                        "type": "string"
+                                    },
+                                    "X-Total": {
+                                        "type": "string"
+                                    },
+                                    "X-Total-Pages": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
                         },
                         "runAfter": {
-                            "Get_Project_Audit_Events": [
+                            "Get_total_pages_for_Project_logs": [
                                 "Succeeded"
                             ]
                         },
-                        "type": "ApiConnection"
+                        "type": "ParseJson"
+                    },
+                    "Until_Project_Audit": {
+                        "actions": {
+                            "Get_Project_Audit_Events": {
+                                "inputs": {
+                                    "headers": {
+                                        "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
+                                        "created_after": "@variables('created_after')"
+                                    },
+                                    "method": "GET",
+                                    "uri": "https://gitlab.com/api/v4/projects/@{int(items('For_each_project_ID'))}/audit_events?per_page=100&page=@{variables('PageNum')}"
+                                },
+                                "runAfter": {
+                                    "Increment_Project_page_nuumber": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "Http"
+                            },
+                            "Increment_Project_page_nuumber": {
+                                "inputs": {
+                                    "name": "PageNum"
+                                },
+                                "runAfter": {},
+                                "type": "IncrementVariable"
+                            },
+                            "Post_Project_Audit_Events": {
+                                "inputs": {
+                                    "body": "@{body('Get_total_pages_for_Project_logs')}",
+                                    "headers": {
+                                        "Log-Type": "GitlabProject"
+                                    },
+                                    "host": {
+                                        "connection": {
+                                            "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
+                                        }
+                                    },
+                                    "method": "post",
+                                    "path": "/api/logs"
+                                },
+                                "runAfter": {
+                                    "Get_Project_Audit_Events": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "ApiConnection"
+                            }
+                        },
+                        "expression": "@equals(variables('PageNum'), int(body('Parse_project_Headers')?['X-Total-Pages']))",
+                        "limit": {
+                            "count": 60,
+                            "timeout": "PT1H"
+                        },
+                        "runAfter": {
+                            "Parse_project_Headers": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Until"
                     }
                 },
                 "foreach": "[concat('@split(''',parameters('ProjectIds'),''','','')')]",
@@ -232,11 +533,27 @@
                     "path": "/secrets/@{encodeURIComponent('GitlabSecret')}/value"
                 },
                 "runAfter": {
-                    "Initialize_variable": [
+                    "Initialize_Page_Number": [
                         "Succeeded"
                     ]
                 },
                 "type": "ApiConnection"
+            },
+            "Get_total_pages_for_User_Audit_logs": {
+                "inputs": {
+                    "headers": {
+                        "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
+                        "created_after": "@variables('created_after')"
+                    },
+                    "method": "GET",
+                    "uri": "https://gitlab.com/api/v4/events"
+                },
+                "runAfter": {
+                    "Get_secret": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http"
             },
             "Initialize_Group_IDs": {
                 "inputs": {
@@ -249,6 +566,23 @@
                 },
                 "runAfter": {
                     "Get_secret": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_Page_Number": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "PageNum",
+                            "type": "integer",
+                            "value": 0
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_event_timer": [
                         "Succeeded"
                     ]
                 },
@@ -270,7 +604,7 @@
                 },
                 "type": "InitializeVariable"
             },
-            "Initialize_variable": {
+            "Initialize_event_timer": {
                 "inputs": {
                     "variables": [
                         {
@@ -287,42 +621,182 @@
                 },
                 "type": "InitializeVariable"
             },
-            "Post_User_Audit_Events": {
+            "Parse_JSON": {
                 "inputs": {
-                    "body": "@{body('User_Audit_Events')}",
-                    "headers": {
-                        "Log-Type": "GitlabUser"
-                    },
-                    "host": {
-                        "connection": {
-                            "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
-                        }
-                    },
-                    "method": "post",
-                    "path": "/api/logs"
+                    "content": "@outputs('Get_total_pages_for_User_Audit_logs')['headers']",
+                    "schema": {
+                        "properties": {
+                            "CF-Cache-Status": {
+                                "type": "string"
+                            },
+                            "CF-RAY": {
+                                "type": "string"
+                            },
+                            "Cache-Control": {
+                                "type": "string"
+                            },
+                            "Connection": {
+                                "type": "string"
+                            },
+                            "Content-Length": {
+                                "type": "string"
+                            },
+                            "Content-Type": {
+                                "type": "string"
+                            },
+                            "Date": {
+                                "type": "string"
+                            },
+                            "ETag": {
+                                "type": "string"
+                            },
+                            "Expect-CT": {
+                                "type": "string"
+                            },
+                            "GitLab-LB": {
+                                "type": "string"
+                            },
+                            "GitLab-SV": {
+                                "type": "string"
+                            },
+                            "Link": {
+                                "type": "string"
+                            },
+                            "NEL": {
+                                "type": "string"
+                            },
+                            "RateLimit-Limit": {
+                                "type": "string"
+                            },
+                            "RateLimit-Observed": {
+                                "type": "string"
+                            },
+                            "RateLimit-Remaining": {
+                                "type": "string"
+                            },
+                            "RateLimit-Reset": {
+                                "type": "string"
+                            },
+                            "RateLimit-ResetTime": {
+                                "type": "string"
+                            },
+                            "Referrer-Policy": {
+                                "type": "string"
+                            },
+                            "Report-To": {
+                                "type": "string"
+                            },
+                            "Server": {
+                                "type": "string"
+                            },
+                            "Strict-Transport-Security": {
+                                "type": "string"
+                            },
+                            "Transfer-Encoding": {
+                                "type": "string"
+                            },
+                            "Vary": {
+                                "type": "string"
+                            },
+                            "X-Content-Type-Options": {
+                                "type": "string"
+                            },
+                            "X-Frame-Options": {
+                                "type": "string"
+                            },
+                            "X-Next-Page": {
+                                "type": "string"
+                            },
+                            "X-Page": {
+                                "type": "string"
+                            },
+                            "X-Per-Page": {
+                                "type": "string"
+                            },
+                            "X-Prev-Page": {
+                                "type": "string"
+                            },
+                            "X-Request-Id": {
+                                "type": "string"
+                            },
+                            "X-Runtime": {
+                                "type": "string"
+                            },
+                            "X-Total": {
+                                "type": "string"
+                            },
+                            "X-Total-Pages": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
                 },
                 "runAfter": {
-                    "User_Audit_Events": [
+                    "Get_total_pages_for_User_Audit_logs": [
                         "Succeeded"
                     ]
                 },
-                "type": "ApiConnection"
+                "type": "ParseJson"
             },
-            "User_Audit_Events": {
-                "inputs": {
-                    "headers": {
-                        "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
-                        "created_after": "@variables('created_after')"
+            "Until_User_Audit": {
+                "actions": {
+                    "Get_User_Audit_logs": {
+                        "inputs": {
+                            "headers": {
+                                "PRIVATE-TOKEN": "@body('Get_secret')?['value']",
+                                "created_after": "@variables('created_after')"
+                            },
+                            "method": "GET",
+                            "uri": "https://gitlab.com/api/v4/events?per_page=100&page=@{variables('PageNum')}"
+                        },
+                        "runAfter": {
+                            "Increment_User_page_number": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Http"
                     },
-                    "method": "GET",
-                    "uri": "https://gitlab.com/api/v4/events"
+                    "Increment_User_page_number": {
+                        "inputs": {
+                            "name": "PageNum"
+                        },
+                        "runAfter": {},
+                        "type": "IncrementVariable"
+                    },
+                    "Post_User_Audit_Events": {
+                        "inputs": {
+                            "body": "@{body('Get_total_pages_for_User_Audit_logs')}",
+                            "headers": {
+                                "Log-Type": "GitlabUser"
+                            },
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azureloganalyticsdatacollector']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "path": "/api/logs"
+                        },
+                        "runAfter": {
+                            "Get_User_Audit_logs": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection"
+                    }
+                },
+                "expression": "@equals(variables('PageNum'), int(body('Parse_JSON')?['X-Total-Pages']))",
+                "limit": {
+                    "count": 60,
+                    "timeout": "PT1H"
                 },
                 "runAfter": {
-                    "Get_secret": [
+                    "Parse_JSON": [
                         "Succeeded"
                     ]
                 },
-                "type": "Http"
+                "type": "Until"
             }
         },
         "contentVersion": "1.0.0.0",
