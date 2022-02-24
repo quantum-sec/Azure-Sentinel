@@ -790,7 +790,7 @@
                                     "inputs": {
                                         "body": "@{body('Get_total_pages_for_User_Audit_logs')}",
                                         "headers": {
-                                            "Log-Type": "GitlabUser"
+                                            "Log-Type": "GitLabUser"
                                         },
                                         "host": {
                                             "connection": {
