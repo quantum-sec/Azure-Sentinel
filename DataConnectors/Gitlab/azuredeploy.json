@@ -305,7 +305,7 @@
                                             "inputs": {
                                                 "body": "@{body('Get_total_pages_for_Group_logs')}",
                                                 "headers": {
-                                                    "Log-Type": "GitlabGroup"
+                                                    "Log-Type": "GitLabGroup"
                                                 },
                                                 "host": {
                                                     "connection": {
