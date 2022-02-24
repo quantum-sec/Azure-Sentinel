@@ -505,7 +505,7 @@
                                             "inputs": {
                                                 "body": "@{body('Get_total_pages_for_Project_logs')}",
                                                 "headers": {
-                                                    "Log-Type": "GitlabProject"
+                                                    "Log-Type": "GitLabProject"
                                                 },
                                                 "host": {
                                                     "connection": {
