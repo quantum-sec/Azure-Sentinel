@@ -77,7 +77,7 @@
                         "CybereasonHostName": "[parameters('CybereasonHostName')]",
                         "CybereasonPassword": "[parameters('CybereasonPassword')]",
                         "logAnalyticsUri": "[variables('LogAnaltyicsUri')]",
-                        "WEBSITE_RUN_FROM_PACKAGE": "To be added"  // To be updated
+                        "WEBSITE_RUN_FROM_PACKAGE": "https://github.com/quantum-sec/Azure-Sentinel/blob/master/DataConnectors/Cybereason/cybereason-pull.zip?raw=true"  // should be updated to Master link
                     }
                 }
             ]

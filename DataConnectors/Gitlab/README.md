@@ -11,7 +11,7 @@ This log source uses logic app workflow with log analytics send data plugin. Thi
 
 
 ## Deploy the Logic App template
-<!-- [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/<Tobeadded>) -->
+[![Deploy to Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2FAzure-Sentinel%2Fmaster%2FDataConnectors%2FGitlab%2Fazuredeploy.json)
 
 Add projectIds and GroupIDs separated by comma in the ARM Template.
 
