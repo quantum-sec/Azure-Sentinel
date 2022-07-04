@@ -83,7 +83,7 @@ def get_detection_details(malopGuid):
   generate_session()
   try:
     malop_details = session.request("POST", malop_details_url, data=json.dumps(query), headers=headers)
-    if len(malop_details.content) > 0:
+    if malop_details.content:
       details = json.loads(malop_details.content)
     else:
       logging.info('No Malop Details')
