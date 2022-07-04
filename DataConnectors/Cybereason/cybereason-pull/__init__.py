@@ -97,7 +97,7 @@ def generate_date():
     state = StateManager(connection_string=connection_string)
     past_time = state.get()
     if past_time is not None:
-        logging.info("The last time point is: {}".format(past_time))
+        logging.info(f"The last time point is: {past_time}")
     else:
         logging.info("There is no last time point, trying to get events for last hour.")      
         past_time = current_time - datetime.timedelta(minutes=60)
