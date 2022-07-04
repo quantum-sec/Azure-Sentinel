@@ -1,16 +1,15 @@
 import base64
-import datetime
 import hashlib
 import hmac
 import json
 import logging
 import os
 import re
-
-import azure.functions as func
 import requests
 
-from .state_manager import StateManager
+from delorean import Delorean
+from datetime import datetime, timedelta
+import azure.functions as func
 
 customer_id = os.environ["WorkspaceID"]
 shared_key = os.environ["WorkspaceKey"]
@@ -94,16 +93,9 @@ def get_detection_details(malopGuid):
 
 
 def generate_date():
-    current_time = datetime.datetime.utcnow() - datetime.timedelta(minutes=10)
-    state = StateManager(connection_string=connection_string)
-    past_time = state.get()
-    if past_time is not None:
-        logging.info(f"The last time point is: {past_time}")
-    else:
-        logging.info("There is no last time point, trying to get events for last hour.")
-        past_time = current_time - datetime.timedelta(minutes=60)
-    state.post(current_time)
-    return (int(past_time.timestamp() * 1000.0), int(current_time.timestamp() * 1000.0))
+    current_time = datetime.utcnow()
+    past_time = current_time - timedelta(minutes=60)
+    return (int(Delorean(past_time, timezone='UTC').epoch * 1000), (int(Delorean(current_time, timezone='UTC').epoch * 1000)))
 
 
 def build_signature(
@@ -126,7 +118,7 @@ def post_data(customer_id, shared_key, body, log_type):
     method = "POST"
     content_type = "application/json"
     resource = "/api/logs"
-    rfc1123date = datetime.datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
+    rfc1123date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
     content_length = len(body)
     signature = build_signature(
         customer_id,
@@ -154,8 +146,10 @@ def post_data(customer_id, shared_key, body, log_type):
 
 
 def main(timer: func.TimerRequest) -> None:
+    utc_timestamp = datetime.utcnow().isoformat()
     if timer.past_due:
         logging.info("The timer is past due!")
+    logging.info('Python timer trigger function ran at %s', utc_timestamp)
     start_time, end_time = generate_date()
     malops = get_detections(start_time, end_time)
     if len(malops["malops"]) > 0:
@@ -163,8 +157,9 @@ def main(timer: func.TimerRequest) -> None:
         for detection in malops["malops"]:
             post_data(customer_id, shared_key, json.dumps(detection), "CybereasonMalop")
             details = get_detection_details(detection["guid"])
-            post_data(
-                customer_id, shared_key, json.dumps(details), "CybereasonMalopDetail"
-            )
+            if details:
+              post_data(
+                  customer_id, shared_key, json.dumps(details), "CybereasonMalopDetail"
+              )
     else:
         logging.info("No latest events available")
