@@ -120,7 +120,7 @@ def post_data(customer_id, shared_key, body, log_type):
     rfc1123date = datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
     content_length = len(body)
     signature = build_signature(customer_id, shared_key, rfc1123date, content_length, method, content_type, resource)
-    x =logAnalyticsUri
+    x = logAnalyticsUri
     x = check_log_analytics_uri(logAnalyticsUri)
     uri = x + resource + '?api-version=2016-04-01'
     headers = {
