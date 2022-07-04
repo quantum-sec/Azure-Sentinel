@@ -89,7 +89,7 @@ def get_detection_details(malopGuid):
       logging.info('No Malop Details')
       details = None
   except Exception as get_malop_details:
-    logging.error('Error getting detections Details => : {}'.format(get_malop_details))
+    logging.error(f'Error getting detections Details => : {get_malop_details}')
   return details
 
 def generate_date():
