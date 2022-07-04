@@ -58,8 +58,8 @@ def generate_session():
 def get_detections(start_time, end_time):
   malops_url = base_url + malops_endpoint
   query = {
-    "startTime":start_time,
-    "endTime":end_time
+    "startTime": start_time,
+    "endTime": end_time
   }
   
   headers = {"Content-Type": "application/json"}
