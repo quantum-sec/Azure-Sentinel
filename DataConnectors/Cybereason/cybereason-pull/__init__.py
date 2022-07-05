@@ -152,7 +152,7 @@ def main(timer: func.TimerRequest) -> None:
     logging.info('Python timer trigger function ran at %s', utc_timestamp)
     start_time, end_time = generate_date()
     malops = get_detections(start_time, end_time)
-    if len(malops["malops"]) > 0:
+    if malops["malops"]:
         logging.info("Found Detections")
         for detection in malops["malops"]:
             post_data(customer_id, shared_key, json.dumps(detection), "CybereasonMalop")
