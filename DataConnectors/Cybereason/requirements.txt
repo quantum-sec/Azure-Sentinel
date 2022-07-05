@@ -3,3 +3,8 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 azure-functions
+requests==2.27.1
+azure-core
+azure-storage-blob
+azure-storage-file-share
+delorean
