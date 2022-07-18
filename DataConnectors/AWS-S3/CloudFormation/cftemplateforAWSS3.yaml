@@ -136,24 +136,6 @@ Resources:
             Condition:
               StringEquals:
                 's3:x-amz-acl': 'bucket-owner-full-control'
-  #          - Sid: Deny unencrypted object uploads.
-  #            Effect: Deny
-  #            Principal:
-  #              Service: cloudtrail.amazonaws.com
-  #            Action: s3:PutObject
-  #            Resource: !Sub arn:${AWS::Partition}:s3:::${CloudTrailS3Bucket}/*
-  #            Condition:
-  #              StringNotEquals:
-  #                s3:x-amz-server-side-encryption: aws:kms
-  #          - Sid: Deny incorrect encryption header.
-  #            Effect: Deny
-  #            Principal:
-  #              Service: cloudtrail.amazonaws.com
-  #            Action: s3:PutObject
-  #            Resource: !Sub arn:${AWS::Partition}:s3:::${CloudTrailS3Bucket}/*
-  #            Condition:
-  #              StringNotEquals:
-  #                s3:x-amz-server-side-encryption-aws-kms-key-id: !GetAtt CloudtrailKey.Arn
   CloudTrail:
     DependsOn: CloudTrailS3Policy
     Condition: EnableCloudTrailConnector
