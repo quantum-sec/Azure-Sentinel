@@ -5,8 +5,8 @@
         "title": "Restrict MDE Domain",
         "description": "This play book will take DNS entities and generate alert and block threat indicators for each domain in Microsoft Defender for Endpoint for 90 days.",
         "prerequisites": ["You will need to grant Ti.ReadWrite permissions to the managed identity."],
-        "lastUpdateTime": "2021-07-14T00:00:00.000Z",
-        "entities": [ "DnsResolution" ],
+        "lastUpdateTime": "2022-07-22T00:00:00.000Z",
+        "entities": [ "dnsresolution" ],
         "tags": [ "Remediation" ],
         "support": {
             "tier": "Community"
@@ -96,7 +96,7 @@
                                                     "action": "AlertAndBlock",
                                                     "application": "Azure Sentinel",
                                                     "description": "@{triggerBody()?['object']?['properties']?['incidentNumber']}-@{triggerBody()?['object']?['properties']?['title']}",
-                                                    "expirationTime": "@{addDays(triggerBody()?['TimeGenerated'], 90)}",
+                                                    "expirationTime": "@{addDays(triggerBody()?['object']?['properties']?['createdTimeUtc'], 90)}",
                                                     "indicatorType": "DomainName",
                                                     "indicatorValue": "@{items('For_each')?['DomainName']}",
                                                     "severity": "@{triggerBody()?['object']?['properties']?['severity']}",
@@ -293,7 +293,7 @@
                         }
                     },
                     "triggers": {
-                        "When_Azure_Sentinel_incident_creation_rule_was_triggered": {
+                        "Microsoft_Sentinel_incident": {
                             "inputs": {
                                 "body": {
                                     "callback_url": "@{listCallbackUrl()}"

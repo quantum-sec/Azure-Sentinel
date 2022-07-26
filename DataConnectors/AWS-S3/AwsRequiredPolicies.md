@@ -74,8 +74,7 @@ These policies are required for all S3 connectors, regardless of AWS service.
         "AWS": "${roleArn}"
       },
       "Action": [
-        "s3:Get*",
-        "s3:List*"
+        "s3:GetObject"
       ],
       "Resource": "arn:aws:s3:::${bucketName}/*"
     }
@@ -90,7 +89,7 @@ These policies are required for all S3 connectors, regardless of AWS service.
 Apply the following additional policies if you are ingesting GuardDuty findings.
 
 ### KMS policy
-- Allows GuardDuty to encrypt and decrypt the logs it sends to S3.
+- Allows GuardDuty to decrypt the logs it sends to S3.
 
    | Placeholders | Value to enter |
    | ------------ | -------------- |
@@ -117,11 +116,7 @@ Apply the following additional policies if you are ingesting GuardDuty findings.
         ]
       },
       "Action": [
-        "kms:Encrypt",
-        "kms:Decrypt",
-        "kms:ReEncrypt*",
-        "kms:GenerateDataKey*",
-        "kms:DescribeKey"
+        "kms:Decrypt"
       ],
       "Resource": "*"
     }
@@ -237,11 +232,7 @@ Apply the following additional policies if you are ingesting CloudTrail logs.
         ]
       },
       "Action": [
-        "kms:Encrypt",
-        "kms:Decrypt",
-        "kms:ReEncrypt*",
-        "kms:GenerateDataKey*",
-        "kms:DescribeKey"
+        "kms:Decrypt"
       ],
       "Resource": "*"
     }
@@ -261,7 +252,9 @@ Apply the following additional policies if you are ingesting CloudTrail logs.
    | {organizationId} | The account ID for an organization |
    | {kmsArn}         | The ARN of the key you created to encrypt/decrypt log files |
 
-**Allow CloudTrail to send logs to a single-user S3 bucket**
+**Allow CloudTrail to send logs to an S3 bucket**
+
+If you apply this policy, you must also apply one of the two policies that follow.
 
 ```JSON
 {
@@ -274,7 +267,16 @@ Apply the following additional policies if you are ingesting CloudTrail logs.
       },
       "Action": "s3:GetBucketAcl",
       "Resource": "arn:aws:s3:::${bucketName}"
-    },
+    }
+  ]
+}
+```
+
+**Allow CloudTrail to send logs to a single-user S3 bucket**
+
+```JSON
+{
+  "Statement": [
     {
       "Sid": "AWSCloudTrailWrite20150319",
       "Effect": "Allow",
