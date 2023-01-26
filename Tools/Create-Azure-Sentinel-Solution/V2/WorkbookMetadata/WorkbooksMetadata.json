@@ -4690,6 +4690,32 @@
     "provider": "Theom"
   },
   {
+    "workbookKey": "DynatraceWorkbooks",
+    "logoFileName": "dynatrace.svg",
+    "description": "This workbook brings together queries and visualizations to assist you in identifying potential threats surfaced by Dynatrace.",
+    "dataTypesDependencies": [
+      "DynatraceAttacks_CL",
+      "DynatraceAuditLogs_CL",
+      "DynatraceProblems_CL",
+      "DynatraceSecurityProblems_CL"
+    ],
+    "dataConnectorsDependencies": [
+      "DynatraceAttacks",
+      "DynatraceAuditLogs",
+      "DynatraceProblems",
+      "DynatraceRuntimeVulnerabilities"
+    ],
+    "previewImagesFileNames": [
+      "DynatraceWorkbookBlack.png",
+      "DynatraceWorkbookWhite.png"
+    ],
+    "version": "2.0.0",
+    "title": "Dynatrace",
+    "templateRelativePath": "Dynatrace.json",
+    "subtitle": "",
+    "provider": "Dynatrace"
+  },
+  {
     "workbookKey": "MDOWorkbook",
     "logoFileName": "",
     "description": "Gain extensive insight into your organization's Microsoft Defender for Office Activity by analyzing, and correlating events.\nYou can track malware and phishing detection over time.",
@@ -4887,5 +4913,25 @@
   "templateRelativePath": "ibossWebUsage.json",
   "subtitle": "",
   "provider": "iboss"
+},
+{
+  "workbookKey": "ReversingLabs-CapabilitiesOverview",
+  "logoFileName": "reversinglabs.svg",
+  "description": "The ReversingLabs-CapabilitiesOverview workbook provides a high level look at your threat intelligence capabilities and how they relate to your operations.",
+  "dataTypesDependencies": [
+  ],
+  "dataConnectorsDependencies": [
+  ],
+  "previewImagesFileNames": [
+    "ReversingLabsTiSummary-White.png",
+    "ReversingLabsTiSummary-Black.png",
+    "ReversingLabsOpsSummary-White.png",
+    "ReversingLabsOpsSummary-Black.png"
+  ],
+  "version": "1.0.1",
+  "title": "ReversingLabs-CapabilitiesOverview",
+  "templateRelativePath": "ReversingLabs-CapabilitiesOverview.json",
+  "subtitle": "",
+  "provider": "ReversingLabs"
 }
 ]
