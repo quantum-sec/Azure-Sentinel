@@ -9,6 +9,7 @@ using Microsoft.Azure.Sentinel.KustoServices.Implementation;
 using Kqlvalidations.Tests.FunctionSchemasLoaders;
 using System;
 using Newtonsoft.Json;
+using Octokit;
 
 namespace Kqlvalidations.Tests
 {
@@ -17,6 +18,7 @@ namespace Kqlvalidations.Tests
         private readonly IKqlQueryAnalyzer _queryValidator;
         private const int TestFolderDepth = 3;
         private const string UserMessageTemplate = "Template Id:{0} is valid but it is in the skipped validation templates. Please remove it from the templates that are skipped since it is valid.";
+        private const int TestFolderDepthForSolutionParsers = 6;
 
         public KqlValidationTests()
         {
@@ -34,6 +36,11 @@ namespace Kqlvalidations.Tests
         [ClassData(typeof(DataConnectorFilesTestData))]
         public void Validate_DataConnectors_HaveValidKql(string fileName, string encodedFilePath)
         {
+            if (fileName == "NoFile.json")
+            {
+                Assert.True(true);
+                return;
+            }
             var dataConnector = ReadAndDeserializeDataConnectorJson(encodedFilePath);
             var id = (string)dataConnector.Id;
             //we ignore known issues
@@ -51,7 +58,6 @@ namespace Kqlvalidations.Tests
                         ValidateKql(id, queryStr);
                     }
                 }
-
             }
 
             foreach (var sampleQuery in dataConnector.SampleQueries)
@@ -75,6 +81,11 @@ namespace Kqlvalidations.Tests
         [ClassData(typeof(HuntingQueriesYamlFilesTestData))]
         public void Validate_HuntingQueries_HaveValidKql(string fileName, string encodedFilePath)
         {
+            if (fileName == "NoFile.yaml")
+            {
+                Assert.True(true);
+                return;
+            }
             var res = ReadAndDeserializeYaml(encodedFilePath);
             var id = (string)res["id"];
 
@@ -86,6 +97,7 @@ namespace Kqlvalidations.Tests
 
             var queryStr = (string)res["query"];
             ValidateKql(id, queryStr);
+            ValidateKqlForLatestTIData(id, queryStr);
         }
 
         // We pass File name to test because in the result file we want to show an informative name for the test
@@ -93,6 +105,11 @@ namespace Kqlvalidations.Tests
         [ClassData(typeof(DetectionsYamlFilesTestData))]
         public void Validate_DetectionQueries_HaveValidKql(string fileName, string encodedFilePath)
         {
+            if (fileName == "NoFile.yaml")
+            {
+                Assert.True(true);
+                return;
+            }
             var res = ReadAndDeserializeYaml(encodedFilePath);
             var id = (string)res["id"];
 
@@ -104,6 +121,7 @@ namespace Kqlvalidations.Tests
 
             var queryStr = (string)res["query"];
             ValidateKql(id, queryStr);
+            ValidateKqlForLatestTIData(id, queryStr);
         }
 
 
@@ -112,6 +130,11 @@ namespace Kqlvalidations.Tests
         [ClassData(typeof(HuntingQueriesYamlFilesTestData))]
         public void Validate_HuntingQueries_SkippedTemplatesDoNotHaveValidKql(string fileName, string encodedFilePath)
         {
+            if (fileName == "NoFile.yaml")
+            {
+                Assert.True(true);
+                return;
+            }
             var res = ReadAndDeserializeYaml(encodedFilePath);
             var id = (string)res["id"];
 
@@ -119,8 +142,8 @@ namespace Kqlvalidations.Tests
             if (ShouldSkipTemplateValidation(id) && res.ContainsKey("query"))
             {
                 var queryStr = (string)res["query"];
-                var validationRes = _queryValidator.ValidateSyntax(queryStr);
-                Assert.False(validationRes.IsValid, string.Format(UserMessageTemplate, id));
+                bool validationRes = _queryValidator.ValidateSyntax(queryStr).IsValid && ValidateKqlForLatestTI(queryStr);
+                Assert.False(validationRes, string.Format(UserMessageTemplate, id));
             }
 
         }
@@ -130,6 +153,11 @@ namespace Kqlvalidations.Tests
         [ClassData(typeof(DetectionsYamlFilesTestData))]
         public void Validate_DetectionQueries_SkippedTemplatesDoNotHaveValidKql(string fileName, string encodedFilePath)
         {
+            if (fileName == "NoFile.yaml")
+            {
+                Assert.True(true);
+                return;
+            }
             var res = ReadAndDeserializeYaml(encodedFilePath);
             var id = (string)res["id"];
 
@@ -137,8 +165,8 @@ namespace Kqlvalidations.Tests
             if (ShouldSkipTemplateValidation(id) && res.ContainsKey("query"))
             {
                 var queryStr = (string)res["query"];
-                var validationRes = _queryValidator.ValidateSyntax(queryStr);
-                Assert.False(validationRes.IsValid, string.Format(UserMessageTemplate, id));
+                bool validationRes = _queryValidator.ValidateSyntax(queryStr).IsValid && ValidateKqlForLatestTI(queryStr);
+                Assert.False(validationRes, string.Format(UserMessageTemplate, id));
             }
 
         }
@@ -158,6 +186,11 @@ namespace Kqlvalidations.Tests
         [ClassData(typeof(ExplorationQueriesYamlFilesTestData))]
         public void Validate_ExplorationQueries_HaveValidKql(string fileName, string encodedFilePath)
         {
+            if (fileName == "NoFile.yaml")
+            {
+                Assert.True(true);
+                return;
+            }
             var res = ReadAndDeserializeYaml(encodedFilePath);
             var id = (string)res["Id"];
 
@@ -175,6 +208,11 @@ namespace Kqlvalidations.Tests
         [ClassData(typeof(ExplorationQueriesYamlFilesTestData))]
         public void Validate_ExplorationQueries_SkippedTemplatesDoNotHaveValidKql(string fileName, string encodedFilePath)
         {
+            if (fileName == "NoFile.yaml")
+            {
+                Assert.True(true);
+                return;
+            }
             var res = ReadAndDeserializeYaml(encodedFilePath);
             var id = (string)res["Id"];
 
@@ -193,6 +231,11 @@ namespace Kqlvalidations.Tests
         [ClassData(typeof(ParsersYamlFilesTestData))]
         public void Validate_ParsersFunctions_HaveValidKql(string fileName, string encodedFilePath)
         {
+            if (fileName == "NoFile.yaml")
+            {
+                Assert.True(true);
+                return;
+            }
             Dictionary<object, object> yaml = ReadAndDeserializeYaml(encodedFilePath);
             var queryParamsAsLetStatements = GenerateFunctionParametersAsLetStatements(yaml);
 
@@ -213,6 +256,11 @@ namespace Kqlvalidations.Tests
         [ClassData(typeof(CommonFunctionsYamlFilesTestData))]
         public void Validate_CommonFunctions_HaveValidKql(string fileName, string encodedFilePath)
         {
+            if (fileName == "NoFile.yaml")
+            {
+                Assert.True(true);
+                return;
+            }
             Dictionary<object, object> yaml = ReadAndDeserializeYaml(encodedFilePath);
             var queryParamsAsLetStatements = GenerateFunctionParametersAsLetStatements(yaml, "FunctionParams");
 
@@ -226,6 +274,130 @@ namespace Kqlvalidations.Tests
             var queryStr = queryParamsAsLetStatements + (string)yaml["FunctionQuery"];
             var parserName = (string)yaml["EquivalentBuiltInFunction"];
             ValidateKql(parserName, queryStr, false);
+        }
+
+
+        [Theory]
+        [ClassData(typeof(SolutionParsersYamlFilesTestData))]
+        public void Validate_SolutionParsersFunctions_HaveValidKql(string fileName, string encodedFilePath)
+        {
+            if (fileName == "NoFile.yaml")
+            {
+                Assert.True(true);
+                return;
+            }
+            Dictionary<object, object> yaml = ReadAndDeserializeYaml(encodedFilePath);
+            var queryParamsAsLetStatements = GenerateFunctionParametersAsLetStatements(yaml, "FunctionParams");
+
+            //Ignore known issues
+            yaml.TryGetValue("id", out object id);
+            if (id != null && ShouldSkipTemplateValidation((string)yaml["id"]))
+            {
+                return;
+            }
+
+            var queryStr = queryParamsAsLetStatements + (string)yaml["FunctionQuery"];
+            var parserName = (string)yaml["FunctionName"];
+            ValidateKql(id.ToString(), queryStr, false);
+        }
+
+        //Will enable this test case once all txt files removed from the parsers folders
+        //[Fact]
+        //public void Validate_AllSolutionParsersFoldersContainsYamlsORMarkdowns()
+        //{
+        //    var basePath = Utils.GetTestDirectory(TestFolderDepthForSolutionParsers);
+        //    var solutionDirectories = Path.Combine(basePath, "Solutions");
+        //    var parserFolders = Directory.GetDirectories(solutionDirectories, "Parsers", SearchOption.AllDirectories);
+
+        //    var allNonYamlMdFiles = parserFolders
+        //        .SelectMany(parserFolder => Directory.GetFiles(parserFolder, "*", SearchOption.AllDirectories))
+        //        .Where(file => !file.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase) && !file.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+        //        .ToList();
+
+        //    Assert.True(!allNonYamlMdFiles.Any(), $"All files under Parsers folders are supposed to have .yaml or .md extension");
+        //}
+
+        [Fact]
+        public void Validate_AllSolutionParsersFoldersContainsYamlsORMarkdowns()
+        {
+            var gitHubApiClient = GitHubApiClient.Instance;
+
+            IReadOnlyList<PullRequestFile> prFiles = gitHubApiClient.GetPullRequestFiles();
+
+            if (prFiles.Count == 0)
+            {
+                // No pull request files found, fail the test with an appropriate message
+                Assert.True(false, "No pull request files found. Unable to perform validation.");
+                return;
+            }
+
+            // Define constants for readability
+            const string parsersFolder = "Parsers";
+            const string parserFolder = "Parser";
+            const string removedStatus = "removed";
+
+            var basePath = Utils.GetTestDirectory(TestFolderDepthForSolutionParsers);
+            var solutionDirectories = Path.Combine(basePath, "Solutions");
+            var parserPaths = Directory.GetDirectories(solutionDirectories, parsersFolder, SearchOption.AllDirectories).ToList();
+            parserPaths.AddRange(Directory.GetDirectories(solutionDirectories, parserFolder, SearchOption.AllDirectories).ToList());
+
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".yaml", ".md" };
+
+            var filteredFiles = prFiles
+                .Where(file =>
+                    parserPaths.Any(parserPath => Path.Combine(basePath, file.FileName.Replace('/', Path.DirectorySeparatorChar)).StartsWith(parserPath, StringComparison.OrdinalIgnoreCase)) &&
+                    file.Status != removedStatus &&
+                    !allowedExtensions.Contains(Path.GetExtension(file.FileName)))
+                .ToList();
+
+            // Assert that there are no disallowed extensions
+            Assert.False(filteredFiles.Any(), $"Files with disallowed extensions found: {string.Join(", ", filteredFiles.Select(file => file.FileName))}, Only {string.Join(", ", allowedExtensions)} extensions are allowed under Solution/Parsers folder.");
+        }
+
+
+        /// <summary>
+        /// Validates the KQL query for the latest Threat Intelligence data.
+        /// </summary>
+        /// <param name="id">template id</param>
+        /// <param name="queryStr">query string</param>
+        private void ValidateKqlForLatestTIData(string id, string queryStr)
+        {
+            bool queryMatch = ValidateKqlForLatestTI(queryStr);
+            Assert.True(
+                queryMatch,
+                queryMatch
+                   ? string.Empty
+    : @$"Template Id: {id} is not valid 
+        Errors: Content needs to use the latest Threat Intelligence data. Sample queries to get the latest Threat Intelligence data:
+        ThreatIntelligenceIndicator
+        | where TimeGenerated >= ago(ioc_lookBack)
+        | summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId
+        | where Active == true and ExpirationDateTime > now()
+
+        or
+
+        ThreatIntelligenceIndicator
+        | where TimeGenerated >= ago(ioc_lookBack)
+        | summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId
+        | where ExpirationDateTime > now() and Active == true");
+        }
+
+        /// <summary>
+        /// Validates the KQL query for the latest Threat Intelligence data.
+        /// </summary>
+        /// <param name="queryStr">query string</param>
+        /// <returns>returns true if query is valid</returns>
+        private bool ValidateKqlForLatestTI(string queryStr)
+        {
+            //Condition to check below logic only when queryStr it contains "ThreatIntelligenceIndicator" followed by "|"
+            string tiTablepattern = @"ThreatIntelligenceIndicator\s*\|\s*";
+            bool match = Regex.IsMatch(queryStr, tiTablepattern);
+            if (match)
+            {
+                string queryPattern = @"ThreatIntelligenceIndicator\s*\|\s*where\s*TimeGenerated\s*>=\s*ago\(\w+\)\s*\|\s*summarize\s*LatestIndicatorTime\s*=\s*arg_max\(TimeGenerated,\s*\*\)\s*by\s*IndicatorId\s*\|\s*where\s*(?:ExpirationDateTime\s*>\s*now\(\)\s*and\s*Active\s*==\s*true|Active\s*==\s*true\s*and\s*ExpirationDateTime\s*>\s*now\(\))";
+                return Regex.IsMatch(queryStr, queryPattern);
+            }
+            return true;
         }
 
         private void ValidateKql(string id, string queryStr, bool ignoreNoTabularExpressionError = true)
