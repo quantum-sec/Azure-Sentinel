@@ -23,17 +23,27 @@ Parsers are created [using functions in Azure monitor log queries](https://docs.
     - [Parser dependency](#parser-dependency)
     - [Parser Setup](#parser-setup-2)
     - [Linked tables](#linked-tables-2)
+  - [Microsoft Exchange Security Check VIP Parser](#microsoft-exchange-security-check-vip-parser)
+    - [Parser Definition](#parser-definition-3)
+    - [Parser Description](#parser-description-3)
+    - [Parser dependency](#parser-dependency-1)
+    - [Parser Setup](#parser-setup-3)
+  - [Microsoft Exchange Compare Data MRA Parser for On-Premises](#microsoft-exchange-compare-data-mra-parser-for-on-premises)
+    - [Parser Definition](#parser-definition-4)
+    - [Parser Description](#parser-description-4)
+    - [Parser Setup](#parser-setup-4)
 
 ## ExchangeConfiguration Parser
 
 ### Parser Definition
 
 - Title:           ESI - Exchange Configuration Parser
-- Version:         1.6
-- Last Updated:    13/10/2022
+- Version:         1.6.1
+- Last Updated:    19/12/2023
 
 |**Version**  |**Details**  |
 |---------|-----------------------------------------------------------------------------------------------------------------------|
+|v1.6.1    | <ul><li>Adding version in comment of the Parser</li></ul>  |
 |v1.6     | <ul><li>Change consumption of Identity_Name_S by IdentityString_s. Requires CollectExchSecIns Script version 7.5.1 minimum</li></ul>  |
 |v1.5     | <ul><li>Change the usage of TimeGenerated instead of EntryDate for filtering BaseRequest.</li><li>Change alllife duration to 1080 days instead of 90 days. </li></ul>       |
 |v1.4     | <ul><li>Capacity to find all configuration without date limitation with the keyword "alllife" in SpecificConfigurationDate</li></ul>   |
@@ -120,11 +130,14 @@ let Target = 'On-Premises';
 ### Parser Definition
 
 - Title:           Exchange Admin Audit Logs Parser
-- Version:         1.0
-- Last Updated:    15/11/2022
+- Version:         1.3.0
+- Last Updated:    01/11/2023
 
 |**Version**  |**Details**  |
 |---------|-----------------------------------------------------------------------------------------------------------------------|
+|v1.3     | <ul><li>Implement a VIP search in all VIP information (DisplayName, UPN, ObjectGUID ...). MESCheckVIP parser is now mandatory</li></ul>  |
+|v1.2     | <ul><li>The fuzzyTable need to have an objectGuid in a Guid format to be aligned with the watchlist.</li></ul>  |
+|v1.1     | <ul><li>Watchlist ExchangeVIP is not mandatory anymore</li></ul>  |
 |v1.0     | <ul><li>Function initilisation for Sentinel Solution</li></ul> |
 
 ### Parser Description
@@ -144,3 +157,70 @@ This parser is linked to "ExchangeVIP" whatchlist
 ### Linked tables
 
 This parser assumes that MS Exchange Management Logs from Exchange Servers Event Logs are collected in Log Analytics.
+
+## Microsoft Exchange Security Check VIP Parser
+
+### Parser Definition
+
+- Title:           Microsoft Exchange Security Check VIP (MESCheckVIP) Parser
+- Version:         1.0.0
+- Last Updated:    01/11/2023
+
+|**Version**  |**Details**  |
+|---------|-----------------------------------------------------------------------------------------------------------------------|
+|v1.0     | <ul><li>Function initilisation for Sentinel Solution</li></ul> |
+
+### Parser Description
+
+This parser verify if a user (by Display name, UPN, Canonical name, alias, SamAccountName, DN) is a VIP in ExchangeVIP Whatchlist or not.
+
+### Parser dependency
+
+This parser is linked to "ExchangeVIP" whatchlist
+
+### Parser Setup
+
+ 1. Open Log Analytics/Microsoft Sentinel Logs blade. Copy the query below and paste into the Logs query window.
+ 2. Click the Save button above the query. A pane will appear on the right, select "as Function" from the drop down. Enter the Function Name "MESCheckVIP".
+
+>#### **Parameters:**
+>
+>1 parameter to add during creation : UserToCheck, type string, No default value
+ 
+ 1. Function App usually take 10-15 minutes to activate. You can then use Function Alias for other queries
+
+## Microsoft Exchange Compare Data MRA Parser for On-Premises
+
+### Parser Definition
+
+- Title:           Microsoft Exchange Compare Data MRA Parser for On-Premises
+- Version:         1.0.0
+- Last Updated:    30/08/2024
+- Description:     This parser compare data from MRA and ESI Exchange Collector to find differences
+
+|**Version**  |**Details**  |
+|---------|-----------------------------------------------------------------------------------------------------------------------|
+|v1.0     | <ul><li>Function initilisation for Sentinel Solution</li></ul> |
+
+### Parser Description
+
+This parser compare data from MRA and ESI Exchange Collector to find differences
+
+### Parser Setup
+
+ 1. Open Log Analytics/Microsoft Sentinel Logs blade. Copy the query below and paste into the Logs query window.
+ 2. Click the Save button above the query. A pane will appear on the right, select "as Function" from the drop down. Enter the Function Name "MESCompareDataMRA".
+ 3. Function App usually take 10-15 minutes to activate. You can then use Function Alias for other queries
+ 4. This parser is linked to "MRA" and "ESI Exchange Collector" tables
+
+>#### **Parameters:**
+
+>7 parameter to add during creation :
+>
+>  1. SectionCompare, type string, default value ""
+>  2. DateCompare, type string, default value "lastdate"
+>  3. CurrentDate, type string, default value "lastdate"
+>  4. EnvList, type string, default value "All"
+>  5. TypeEnv, type string, default value "Online"
+>  6. CurrentRole, type string, default value ""
+>  7. ExclusionsAcct, type dynamic, default value dynamic("")
